@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // A couple is found by its secret code. Nobody can list couples,
+    // so the only way in is knowing the code.
+    match /couples/{coupleId} {
+      allow get, create, update: if request.auth != null;
+
+      match /{collection}/{docId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+  }
+}

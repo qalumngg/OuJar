@@ -10,6 +10,7 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.qalumn.ourjar.domain.JarGeometry
 import com.qalumn.ourjar.domain.Mood
+import com.qalumn.ourjar.domain.Need
 import com.qalumn.ourjar.domain.TimeFmt
 import com.qalumn.ourjar.widget.WidgetSync
 import kotlinx.coroutines.CoroutineScope
@@ -270,6 +271,7 @@ object Repo {
         return MarbleItem(
             d.id, d.getString("memberId").orEmpty(), d.getString("memberName").orEmpty(),
             Mood.fromKey(mood), d.getString("note").orEmpty(), d.getLong("createdAt") ?: 0L,
+            Mood.fromKeyOrNull(d.getString("mood2")), Need.fromKey(d.getString("need")),
         )
     }
 
@@ -303,11 +305,12 @@ object Repo {
         base(s).collection("notes").document(id).delete()
     }
 
-    fun addMarble(mood: Mood, note: String) {
+    fun addMarble(mood: Mood, mood2: Mood?, need: Need?, note: String) {
         val s = session.value ?: return
         base(s).collection("marbles").document().set(
             mapOf(
                 "memberId" to s.memberId, "memberName" to s.myName, "mood" to mood.key,
+                "mood2" to (mood2?.key ?: ""), "need" to (need?.key ?: ""),
                 "note" to note.trim(), "createdAt" to System.currentTimeMillis(),
             ),
         )

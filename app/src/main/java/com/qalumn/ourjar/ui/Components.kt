@@ -34,6 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -248,27 +251,14 @@ fun Initial(name: String, isMe: Boolean, size: Dp = 32.dp) {
 
 /** A small glassy marble, drawn the same way as the ones in the jar. */
 @Composable
-fun MarbleDot(color: Color, size: Dp) {
+fun MarbleDot(color: Color, size: Dp, color2: Color? = null, seed: Int = 0x55) {
     Canvas(Modifier.size(size)) {
         val r = this.size.minDimension / 2f
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    androidx.compose.ui.graphics.lerp(color, Color.White, 0.55f),
-                    color,
-                    androidx.compose.ui.graphics.lerp(color, Color.Black, 0.17f),
-                ),
-                center = Offset(r * 0.65f, r * 0.6f),
-                radius = r * 1.55f,
-            ),
-            radius = r,
-            center = Offset(r, r),
-        )
-        drawCircle(
-            color = Color.White.copy(alpha = 0.8f),
-            radius = r * 0.17f,
-            center = Offset(r * 0.62f, r * 0.55f),
-        )
+        drawIntoCanvas { c ->
+            com.qalumn.ourjar.render.JarRenderer.drawMarble(
+                c.nativeCanvas, r, r, r, color.toArgb(), color2?.toArgb(), seed,
+            )
+        }
     }
 }
 

@@ -34,7 +34,7 @@ class MoodJarWidget : GlanceAppWidget() {
         val session = Prefs.session()
         val all = Prefs.loadMarbles()
             .filter { it.createdAt >= weekStart }
-            .map { MarbleItem(it.id, it.memberId, "", it.mood, "", it.createdAt) }
+            .map { MarbleItem(it.id, it.memberId, "", it.mood, "", it.createdAt, it.mood2) }
         val mine = all.filter { it.memberId == session?.memberId }
         val theirs = all.filter { it.memberId != session?.memberId }
         val myName = session?.myName ?: "Me"

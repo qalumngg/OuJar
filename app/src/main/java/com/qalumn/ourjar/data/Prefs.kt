@@ -77,7 +77,7 @@ object Prefs {
     fun saveMarbles(marbles: List<MarbleItem>) {
         val arr = JSONArray()
         marbles.forEach {
-            arr.put(JSONObject().put("id", it.id).put("memberId", it.memberId).put("mood", it.mood.key).put("createdAt", it.createdAt))
+            arr.put(JSONObject().put("id", it.id).put("memberId", it.memberId).put("mood", it.mood.key).put("mood2", it.mood2?.key ?: "").put("createdAt", it.createdAt))
         }
         sp.edit().putString("cacheMarbles", arr.toString()).apply()
     }
@@ -88,7 +88,7 @@ object Prefs {
             val arr = JSONArray(raw)
             (0 until arr.length()).map {
                 val o = arr.getJSONObject(it)
-                MarbleLite(o.getString("id"), o.optString("memberId", ""), Mood.fromKey(o.getString("mood")), o.getLong("createdAt"))
+                MarbleLite(o.getString("id"), o.optString("memberId", ""), Mood.fromKey(o.getString("mood")), o.getLong("createdAt"), Mood.fromKeyOrNull(o.optString("mood2", "")))
             }
         } catch (e: Exception) {
             emptyList()

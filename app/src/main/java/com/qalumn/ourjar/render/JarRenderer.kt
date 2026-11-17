@@ -37,14 +37,14 @@ object JarPalettes {
     )
 }
 
-class JarMarble(val color: Int, val pos: MarblePos, val seed: Int)
+class JarMarble(val color: Int, val color2: Int?, val pos: MarblePos, val seed: Int)
 
 /** Turns marble records into positioned, coloured marbles. Oldest first; only the newest fit in the jar. */
 object JarScene {
     fun from(items: List<MarbleItem>): List<JarMarble> {
         val visible = items.sortedBy { it.createdAt }.takeLast(JarGeometry.CAPACITY)
         val positions = JarLayout.settle(visible.map { it.id })
-        return visible.mapIndexed { i, m -> JarMarble(m.mood.argb, positions[i], JarLayout.hash(m.id)) }
+        return visible.mapIndexed { i, m -> JarMarble(m.mood.argb, m.mood2?.argb, positions[i], JarLayout.hash(m.id)) }
     }
 }
 
@@ -85,6 +85,62 @@ object JarRenderer {
      * @param dropY if set, the newest marble is drawn at this height (jar units) instead of its resting spot,
      * which is how the "drop into the jar" animation works.
      */
+    /** One glass marble. With a second colour it gets an S-shaped swirl band, like a real two-colour marble. */
+    fun drawMarble(canvas: Canvas, cx: Float, cy: Float, rr: Float, color: Int, color2: Int?, seed: Int) {
+        val light = mix(color, 0xFFFFFFFF.toInt(), 0.55f)
+        val dark = mix(color, 0xFF000000.toInt(), 0.17f)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+        paint.shader = RadialGradient(
+            cx - rr * 0.35f, cy - rr * 0.4f, rr * 1.55f,
+            intArrayOf(light, color, dark), floatArrayOf(0f, 0.55f, 1f), Shader.TileMode.CLAMP,
+        )
+        canvas.drawCircle(cx, cy, rr, paint)
+
+        val angle = (seed and 0xFF) * 360f / 256f
+        if (color2 == null) {
+            val swirl = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND
+                this.color = alpha(mix(color, 0xFFFFFFFF.toInt(), 0.65f), 120)
+                strokeWidth = rr * 0.17f
+            }
+            canvas.drawArc(RectF(cx - rr * 0.62f, cy - rr * 0.62f, cx + rr * 0.62f, cy + rr * 0.62f), angle, 105f, false, swirl)
+        } else {
+            val l2 = mix(color2, 0xFFFFFFFF.toInt(), 0.55f)
+            val d2 = mix(color2, 0xFF000000.toInt(), 0.17f)
+            val band = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = rr * 0.62f
+                shader = RadialGradient(
+                    cx - rr * 0.35f, cy - rr * 0.4f, rr * 1.55f,
+                    intArrayOf(l2, color2, d2), floatArrayOf(0f, 0.55f, 1f), Shader.TileMode.CLAMP,
+                )
+            }
+            val core = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = rr * 0.16f
+                this.color = alpha(0xFFFFFFFF.toInt(), 150)
+            }
+            val clip = Path().apply { addCircle(cx, cy, rr, Path.Direction.CW) }
+            canvas.save()
+            canvas.clipPath(clip)
+            canvas.rotate(angle, cx, cy)
+            val curve = Path().apply {
+                moveTo(cx - rr * 0.35f, cy - rr * 1.15f)
+                cubicTo(cx + rr * 0.95f, cy - rr * 0.45f, cx - rr * 0.95f, cy + rr * 0.45f, cx + rr * 0.35f, cy + rr * 1.15f)
+            }
+            canvas.drawPath(curve, band)
+            canvas.drawPath(curve, core)
+            canvas.restore()
+        }
+
+        val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE; strokeWidth = rr * 0.07f; this.color = alpha(dark, 110)
+        }
+        canvas.drawCircle(cx, cy, rr * 0.97f, ring)
+        val spec = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; this.color = 0xCCFFFFFF.toInt() }
+        canvas.drawOval(RectF(cx - rr * 0.55f, cy - rr * 0.66f, cx - rr * 0.17f, cy - rr * 0.32f), spec)
+    }
+
     fun draw(
         canvas: Canvas,
         w: Float,
@@ -108,35 +164,9 @@ object JarRenderer {
         canvas.drawPath(body, fill)
 
         // Marbles
-        val marblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-        val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
-        val swirl = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND
-        }
-        val spec = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = 0xCCFFFFFF.toInt() }
-
         marbles.forEachIndexed { i, m ->
-            val rr = m.pos.r * 0.95f
-            val cx = m.pos.x
             val cy = if (dropY != null && i == marbles.lastIndex) dropY else m.pos.y
-            val light = mix(m.color, 0xFFFFFFFF.toInt(), 0.55f)
-            val dark = mix(m.color, 0xFF000000.toInt(), 0.17f)
-            marblePaint.shader = RadialGradient(
-                cx - rr * 0.35f, cy - rr * 0.4f, rr * 1.55f,
-                intArrayOf(light, m.color, dark), floatArrayOf(0f, 0.55f, 1f), Shader.TileMode.CLAMP,
-            )
-            canvas.drawCircle(cx, cy, rr, marblePaint)
-
-            swirl.color = alpha(mix(m.color, 0xFFFFFFFF.toInt(), 0.65f), 120)
-            swirl.strokeWidth = rr * 0.17f
-            val a = (m.seed and 0xFF) * 360f / 256f
-            canvas.drawArc(RectF(cx - rr * 0.62f, cy - rr * 0.62f, cx + rr * 0.62f, cy + rr * 0.62f), a, 105f, false, swirl)
-
-            ring.strokeWidth = rr * 0.07f
-            ring.color = alpha(dark, 110)
-            canvas.drawCircle(cx, cy, rr * 0.97f, ring)
-
-            canvas.drawOval(RectF(cx - rr * 0.55f, cy - rr * 0.66f, cx - rr * 0.17f, cy - rr * 0.32f), spec)
+            drawMarble(canvas, m.pos.x, cy, m.pos.r * 0.95f, m.color, m.color2, m.seed)
         }
 
         // Glass

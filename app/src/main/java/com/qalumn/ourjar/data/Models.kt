@@ -1,6 +1,7 @@
 package com.qalumn.ourjar.data
 
 import com.qalumn.ourjar.domain.Mood
+import com.qalumn.ourjar.domain.Need
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -25,6 +26,8 @@ data class MarbleItem(
     val mood: Mood,
     val note: String,
     val createdAt: Long,
+    val mood2: Mood? = null,
+    val need: Need? = null,
 )
 
 enum class DateKind(val key: String, val label: String, val defaultYearly: Boolean) {
@@ -54,4 +57,4 @@ data class DateItem(
 data class CoupleInfo(val anniversary: LocalDate?)
 
 /** What a widget needs, kept in plain SharedPreferences so it works without the app running. */
-data class MarbleLite(val id: String, val memberId: String, val mood: Mood, val createdAt: Long)
+data class MarbleLite(val id: String, val memberId: String, val mood: Mood, val createdAt: Long, val mood2: Mood? = null)

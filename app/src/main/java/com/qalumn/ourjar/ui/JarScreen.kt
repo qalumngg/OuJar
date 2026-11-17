@@ -2,6 +2,7 @@
 
 package com.qalumn.ourjar.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -50,6 +51,7 @@ import com.qalumn.ourjar.data.MarbleItem
 import com.qalumn.ourjar.data.Repo
 import com.qalumn.ourjar.domain.JarGeometry
 import com.qalumn.ourjar.domain.Mood
+import com.qalumn.ourjar.domain.Need
 import com.qalumn.ourjar.domain.TimeFmt
 import com.qalumn.ourjar.render.JarScene
 import com.qalumn.ourjar.ui.theme.Ours
@@ -72,7 +74,7 @@ fun JarScreen() {
     val theirScene = remember(theirs) { JarScene.from(theirs) }
     val partnerName = members.firstOrNull { it.id != me.memberId }?.name
 
-    val counts = remember(week) { week.groupingBy { it.mood }.eachCount() }
+    val counts = remember(week) { week.flatMap { listOfNotNull(it.mood, it.mood2) }.groupingBy { it }.eachCount() }
 
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -132,7 +134,7 @@ fun JarScreen() {
     if (adding) {
         MoodSheet(
             onDismiss = { adding = false },
-            onDrop = { mood, note -> Repo.addMarble(mood, note); adding = false },
+            onDrop = { mood, mood2, need, note -> Repo.addMarble(mood, mood2, need, note); adding = false },
         )
     }
 }
@@ -162,14 +164,17 @@ private fun MarbleRow(m: MarbleItem, mine: Boolean) {
         Modifier.fillMaxWidth().padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MarbleDot(Color(m.mood.argb), 30.dp)
+        MarbleDot(Color(m.mood.argb), 30.dp, m.mood2?.let { Color(it.argb) }, com.qalumn.ourjar.domain.JarLayout.hash(m.id))
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                (if (mine) "You" else m.memberName.ifBlank { "They" }) + " felt " + m.mood.label.lowercase(),
+                feelingLine(m, mine),
                 style = MaterialTheme.typography.titleSmall,
                 color = c.ink,
             )
+            m.need?.let {
+                Text(it.line, style = MaterialTheme.typography.bodyMedium, color = c.accent)
+            }
             if (m.note.isNotBlank()) {
                 Text(m.note, style = MaterialTheme.typography.bodyMedium, color = c.inkSoft)
             }
@@ -183,11 +188,31 @@ private fun MarbleRow(m: MarbleItem, mine: Boolean) {
     }
 }
 
+private fun feelingLine(m: MarbleItem, mine: Boolean): String {
+    val who = if (mine) "You" else m.memberName.ifBlank { "They" }
+    return when {
+        m.mood == Mood.NOTSURE -> if (mine) "You could not tell how you felt" else "$who could not tell how they felt"
+        m.mood2 != null -> "$who felt ${m.mood.label.lowercase()} and ${m.mood2.label.lowercase()}"
+        else -> "$who felt ${m.mood.label.lowercase()}"
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun MoodSheet(onDismiss: () -> Unit, onDrop: (Mood, String) -> Unit) {
+private fun MoodSheet(onDismiss: () -> Unit, onDrop: (Mood, Mood?, Need?, String) -> Unit) {
     val c = Ours.colors
-    var selected by remember { mutableStateOf<Mood?>(null) }
+    var mixed by remember { mutableStateOf(false) }
+    var picked by remember { mutableStateOf(listOf<Mood>()) }
+    var need by remember { mutableStateOf<Need?>(null) }
     var note by remember { mutableStateOf("") }
+
+    fun toggle(m: Mood) {
+        picked = when {
+            m in picked -> picked - m
+            mixed -> (picked + m).takeLast(2)
+            else -> listOf(m)
+        }
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -199,47 +224,93 @@ private fun MoodSheet(onDismiss: () -> Unit, onDrop: (Mood, String) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text("How are you feeling?", style = MaterialTheme.typography.headlineSmall, color = c.ink)
-            Text(
-                "Tap the colour closest to how you feel, then drop it in. Add as many as you like.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = c.inkSoft,
-            )
-            Mood.entries.chunked(4).forEach { rowMoods ->
-                Row(Modifier.fillMaxWidth()) {
-                    rowMoods.forEach { mood ->
-                        val isSelected = selected == mood
-                        Column(
-                            Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(16.dp))
-                                .clickable { selected = mood }
-                                .padding(vertical = 8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Box(
-                                Modifier
-                                    .size(60.dp)
-                                    .then(if (isSelected) Modifier.border(2.dp, c.accent, CircleShape) else Modifier),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                MarbleDot(Color(mood.argb), 44.dp)
-                            }
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                mood.label,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = if (isSelected) c.ink else c.inkSoft,
-                            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Pill("One feeling", !mixed, { mixed = false; picked = picked.take(1) })
+                Pill("Mixed feelings", mixed, { mixed = true })
+            }
+
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(c.cardAlt).padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(Modifier.size(56.dp), contentAlignment = Alignment.Center) {
+                    if (picked.isEmpty()) {
+                        MarbleDot(Color(Mood.NOTSURE.argb).copy(alpha = 0.35f), 44.dp)
+                    } else {
+                        MarbleDot(Color(picked[0].argb), 56.dp, picked.getOrNull(1)?.let { Color(it.argb) }, 0x55)
+                    }
+                }
+                Spacer(Modifier.width(14.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (picked.isEmpty()) {
+                        Text(
+                            if (mixed) "Pick two and they swirl together." else "Tap the one closest to how you feel. Not sure is a fine answer.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = c.inkSoft,
+                        )
+                    } else {
+                        picked.forEach {
+                            Text("${it.label}: ${it.blurb}", style = MaterialTheme.typography.bodyMedium, color = c.ink)
+                        }
+                        if (mixed && picked.size == 1) {
+                            Text("Pick one more.", style = MaterialTheme.typography.bodySmall, color = c.inkSoft)
                         }
                     }
                 }
             }
+
+            Mood.groups.forEach { (title, moods) ->
+                Text(title, style = MaterialTheme.typography.labelMedium, color = c.inkSoft)
+                moods.chunked(4).forEach { rowMoods ->
+                    Row(Modifier.fillMaxWidth()) {
+                        rowMoods.forEach { mood ->
+                            val isSelected = mood in picked
+                            Column(
+                                Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .clickable { toggle(mood) }
+                                    .padding(vertical = 8.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Box(
+                                    Modifier
+                                        .size(60.dp)
+                                        .then(if (isSelected) Modifier.border(2.dp, c.accent, CircleShape) else Modifier),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    MarbleDot(Color(mood.argb), 44.dp)
+                                }
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    mood.label,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = if (isSelected) c.ink else c.inkSoft,
+                                )
+                            }
+                        }
+                        repeat(4 - rowMoods.size) { Spacer(Modifier.weight(1f)) }
+                    }
+                }
+            }
+
+            Text("What would help? (optional)", style = MaterialTheme.typography.labelMedium, color = c.inkSoft)
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Need.entries.forEach { n ->
+                    Pill(n.label, need == n, { need = if (need == n) null else n })
+                }
+            }
+
             OurField(note, { note = it.take(60) }, "Anything to add? (optional)")
             PrimaryButton(
                 "Drop it in",
-                { selected?.let { onDrop(it, note) } },
+                { if (picked.isNotEmpty()) onDrop(picked[0], picked.getOrNull(1), need, note) },
                 Modifier.fillMaxWidth(),
-                enabled = selected != null,
+                enabled = picked.isNotEmpty() && (!mixed || picked.size == 2),
             )
         }
     }

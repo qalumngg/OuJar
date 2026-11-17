@@ -54,6 +54,7 @@ private fun NoteWidgetContent(context: Context, note: Note?, partner: String, si
             from = note?.fromName,
             text = note?.text,
             whenText = note?.let { TimeFmt.relative(it.createdAt) },
+            drawing = note?.drawing.orEmpty(),
             emptyMessage = when {
                 !signedIn -> "Open Jarlings to get started"
                 partner.isNotBlank() -> "No notes from $partner yet. Tap to write one."
@@ -71,7 +72,11 @@ private fun NoteWidgetContent(context: Context, note: Note?, partner: String, si
 
     Image(
         provider = ImageProvider(bitmap),
-        contentDescription = if (note != null) "Love note from ${note.fromName}: ${note.text}" else "Love note",
+        contentDescription = when {
+            note == null -> "Love note"
+            note.drawing.isNotBlank() -> "Drawn love note from ${note.fromName}"
+            else -> "Love note from ${note.fromName}: ${note.text}"
+        },
         contentScale = ContentScale.Fit,
         modifier = GlanceModifier.fillMaxSize().clickable(actionStartActivity(intent)),
     )

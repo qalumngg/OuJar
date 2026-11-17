@@ -13,6 +13,7 @@ import android.text.TextUtils
 import androidx.core.content.res.ResourcesCompat
 import com.qalumn.ourjar.R
 import com.qalumn.ourjar.data.MarbleItem
+import com.qalumn.ourjar.domain.DrawingCodec
 import com.qalumn.ourjar.domain.Mood
 import kotlin.math.max
 import kotlin.math.min
@@ -61,6 +62,7 @@ object CardRenderer {
         text: String?,
         whenText: String?,
         emptyMessage: String,
+        drawing: String = "",
     ): Bitmap {
         val (w, h) = clampSize(widthPx, heightPx)
         val d = density * (w.toFloat() / max(widthPx, 1))
@@ -107,6 +109,26 @@ object CardRenderer {
         val bodyTop = headerBaseline + 10f * d
         val bodyBottom = footerBaseline - 20f * d
         val avail = max(bodyBottom - bodyTop, 20f * d)
+
+        if (drawing.isNotBlank()) {
+            val strokes = DrawingCodec.decode(drawing)
+            val caption = text.trim()
+            val capH = if (caption.isNotEmpty()) 24f * d else 0f
+            val areaW = w - 2 * pad
+            val areaH = max(avail - capH, 20f * d)
+            var dw = areaW
+            var dh = dw / DrawingCodec.ASPECT
+            if (dh > areaH) { dh = areaH; dw = dh * DrawingCodec.ASPECT }
+            val left = pad + (areaW - dw) / 2f
+            val top = bodyTop + (areaH - dh) / 2f
+            DrawingRenderer.draw(canvas, left, top, dw, dh, strokes)
+            if (caption.isNotEmpty()) {
+                val cp = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = hand; color = INK; textSize = 18f * d }
+                val line = TextUtils.ellipsize(caption, cp, areaW, TextUtils.TruncateAt.END).toString()
+                canvas.drawText(line, pad + (areaW - cp.measureText(line)) / 2f, bodyBottom - 4f * d, cp)
+            }
+            return bmp
+        }
         val width = (w - 2 * pad).toInt().coerceAtLeast(1)
         val paint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = hand; color = INK }
         var layout: StaticLayout? = null

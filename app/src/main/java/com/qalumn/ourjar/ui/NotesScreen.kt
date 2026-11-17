@@ -35,6 +35,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import com.qalumn.ourjar.domain.Stroke
+import com.qalumn.ourjar.domain.DrawingCodec
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -77,8 +80,8 @@ fun NotesScreen(onOpenUs: () -> Unit) {
                 item {
                     EmptyNote(
                         "No notes yet",
-                        if (partner != null) "Write the first one for $partner. It shows up on their home screen."
-                        else "Write the first one. They will see it as soon as they join.",
+                        if (partner != null) "Write or draw the first one for $partner. It shows up on their home screen."
+                        else "Write or draw the first one. They will see it as soon as they join.",
                     )
                 }
             } else {
@@ -113,7 +116,7 @@ fun NotesScreen(onOpenUs: () -> Unit) {
         NoteComposer(
             partnerName = partner,
             onDismiss = { composing = false },
-            onSend = { Repo.sendNote(it); composing = false },
+            onSend = { text, drawing -> Repo.sendNote(text, drawing); composing = false },
         )
     }
 
@@ -154,11 +157,17 @@ private fun PaperNote(note: Note) {
     val c = Ours.colors
     Box(Modifier.fillMaxWidth().padding(top = 8.dp)) {
         OurCard(padding = PaddingValues(start = 22.dp, end = 22.dp, top = 28.dp, bottom = 20.dp)) {
-            Text(
-                note.text,
-                style = MaterialTheme.typography.bodyLarge.copy(fontFamily = Hand, fontSize = 30.sp, lineHeight = 34.sp),
-                color = c.ink,
-            )
+            if (note.drawing.isNotBlank()) {
+                DrawingView(note.drawing)
+                if (note.text.isNotBlank()) Spacer(Modifier.height(10.dp))
+            }
+            if (note.text.isNotBlank()) {
+                Text(
+                    note.text,
+                    style = MaterialTheme.typography.bodyLarge.copy(fontFamily = Hand, fontSize = 30.sp, lineHeight = 34.sp),
+                    color = c.ink,
+                )
+            }
             Spacer(Modifier.height(14.dp))
             Text(
                 "${note.fromName}, ${TimeFmt.relative(note.createdAt)}",
@@ -191,20 +200,34 @@ private fun NoteRow(note: Note, mine: Boolean, onClick: (() -> Unit)?) {
                     color = c.inkSoft,
                 )
                 Spacer(Modifier.height(2.dp))
-                Text(
-                    note.text,
-                    style = MaterialTheme.typography.bodyLarge.copy(fontFamily = Hand, fontSize = 23.sp, lineHeight = 26.sp),
-                    color = c.ink,
-                )
+                if (note.drawing.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    DrawingView(note.drawing)
+                }
+                if (note.text.isNotBlank()) {
+                    Text(
+                        note.text,
+                        style = MaterialTheme.typography.bodyLarge.copy(fontFamily = Hand, fontSize = 23.sp, lineHeight = 26.sp),
+                        color = c.ink,
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun NoteComposer(partnerName: String?, onDismiss: () -> Unit, onSend: (String) -> Unit) {
+private fun NoteComposer(partnerName: String?, onDismiss: () -> Unit, onSend: (String, String) -> Unit) {
     val c = Ours.colors
+    var drawMode by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
+    var caption by remember { mutableStateOf("") }
+    val strokes = remember { mutableStateListOf<Stroke>() }
+    var penColor by remember { mutableStateOf(PenColors[0]) }
+    var penWidth by remember { mutableStateOf(PenWidths[1]) }
+    val encoded = if (drawMode) DrawingCodec.encode(strokes.toList()) else ""
+    val tooBig = encoded.length > DrawingCodec.MAX_CHARS
+
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
@@ -212,29 +235,59 @@ private fun NoteComposer(partnerName: String?, onDismiss: () -> Unit, onSend: (S
     ) {
         Column(
             Modifier.padding(horizontal = 20.dp).navigationBarsPadding().imePadding().padding(bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
                 if (partnerName != null) "A note for $partnerName" else "A new note",
                 style = MaterialTheme.typography.headlineSmall,
                 color = c.ink,
             )
-            OurField(
-                value = text,
-                onValueChange = { text = it.take(280) },
-                label = "Write something sweet",
-                singleLine = false,
-                minLines = 4,
-                textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = Hand, fontSize = 26.sp, lineHeight = 30.sp),
-            )
-            Text(
-                "${text.length}/280",
-                style = MaterialTheme.typography.labelMedium,
-                color = c.inkSoft,
-                textAlign = TextAlign.End,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            PrimaryButton("Send", { onSend(text) }, Modifier.fillMaxWidth(), enabled = text.isNotBlank())
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Pill("Write", !drawMode, { drawMode = false })
+                Pill("Draw", drawMode, { drawMode = true })
+            }
+            if (!drawMode) {
+                OurField(
+                    value = text,
+                    onValueChange = { text = it.take(280) },
+                    label = "Write something sweet",
+                    singleLine = false,
+                    minLines = 4,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = Hand, fontSize = 26.sp, lineHeight = 30.sp),
+                )
+                Text(
+                    "${text.length}/280",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = c.inkSoft,
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                PrimaryButton("Send", { onSend(text, "") }, Modifier.fillMaxWidth(), enabled = text.isNotBlank())
+            } else {
+                DrawingPad(strokes, penColor, penWidth)
+                PenColorRow(penColor, { penColor = it })
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    PenWidthRow(penWidth, penColor, { penWidth = it })
+                    Spacer(Modifier.weight(1f))
+                    QuietTextButton("Undo", { if (strokes.isNotEmpty()) strokes.removeAt(strokes.lastIndex) })
+                    QuietTextButton("Clear", { strokes.clear() }, danger = true)
+                }
+                OurField(
+                    value = caption,
+                    onValueChange = { caption = it.take(80) },
+                    label = "Add a few words (optional)",
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = Hand, fontSize = 22.sp),
+                )
+                if (tooBig) {
+                    Text("That drawing is too detailed to send. Undo a few strokes.", style = MaterialTheme.typography.bodySmall, color = c.accent)
+                }
+                PrimaryButton(
+                    "Send",
+                    { onSend(caption, encoded) },
+                    Modifier.fillMaxWidth(),
+                    enabled = strokes.isNotEmpty() && !tooBig,
+                )
+            }
         }
     }
 }

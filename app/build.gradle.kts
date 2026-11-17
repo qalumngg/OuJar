@@ -10,7 +10,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.qalumn.ourjar"
+        applicationId = "com.qalumn.lovebirds"
         minSdk = 26
         targetSdk = 35
         // CI bumps this on every build so new APKs install over old ones.

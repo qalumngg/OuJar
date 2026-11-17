@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Our Jar</string>
+    <string name="app_name">Lovebirds</string>
     <string name="widget_note_label">Love note</string>
     <string name="widget_note_desc">The latest note from your partner</string>
     <string name="widget_jar_label">Mood jar</string>

@@ -199,6 +199,11 @@ private fun MoodSheet(onDismiss: () -> Unit, onDrop: (Mood, String) -> Unit) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Text("How are you feeling?", style = MaterialTheme.typography.headlineSmall, color = c.ink)
+            Text(
+                "Tap the colour closest to how you feel, then drop it in. Add as many as you like.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = c.inkSoft,
+            )
             Mood.entries.chunked(4).forEach { rowMoods ->
                 Row(Modifier.fillMaxWidth()) {
                     rowMoods.forEach { mood ->

@@ -275,6 +275,18 @@ fun UsScreen() {
         }
 
         item {
+            val mode by com.qalumn.ourjar.data.Prefs.themeMode.collectAsState()
+            Column {
+                SectionLabel("Appearance")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("Automatic", "Light", "Dark").forEachIndexed { i, label ->
+                        Pill(label, mode == i, { com.qalumn.ourjar.data.Prefs.setTheme(i) })
+                    }
+                }
+            }
+        }
+
+        item {
             Column(Modifier.fillMaxWidth().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     "Widgets: hold down on your home screen, tap Widgets, and look for Jarlings.",

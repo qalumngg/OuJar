@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.qalumn.ourjar.data.Prefs
 import com.qalumn.ourjar.data.Repo
 import com.qalumn.ourjar.ui.AppRoot
 import com.qalumn.ourjar.ui.theme.OurTheme
@@ -19,6 +20,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        Prefs.init(this)
+        Prefs.loadTheme()
         requestedTab = intent?.getIntExtra(EXTRA_TAB, -1) ?: -1
         setContent {
             OurTheme {

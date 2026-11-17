@@ -16,6 +16,16 @@ object Prefs {
         }
     }
 
+    /** 0 = follow the phone, 1 = light, 2 = dark. */
+    val themeMode = kotlinx.coroutines.flow.MutableStateFlow(0)
+
+    fun loadTheme() { themeMode.value = sp.getInt("themeMode", 0) }
+
+    fun setTheme(mode: Int) {
+        sp.edit().putInt("themeMode", mode).apply()
+        themeMode.value = mode
+    }
+
     fun session(): Session? {
         val code = sp.getString("code", null) ?: return null
         val id = sp.getString("memberId", null) ?: return null

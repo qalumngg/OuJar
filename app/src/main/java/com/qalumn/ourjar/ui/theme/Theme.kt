@@ -7,6 +7,8 @@ import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -133,7 +135,8 @@ val OurShapes = Shapes(
 
 @Composable
 fun OurTheme(content: @Composable () -> Unit) {
-    val dark = isSystemInDarkTheme()
+    val mode by com.qalumn.ourjar.data.Prefs.themeMode.collectAsState()
+    val dark = when (mode) { 1 -> false; 2 -> true; else -> isSystemInDarkTheme() }
     val c = if (dark) DarkOurColors else LightOurColors
     val scheme = if (dark) {
         darkColorScheme(

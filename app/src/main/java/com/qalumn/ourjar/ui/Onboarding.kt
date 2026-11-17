@@ -161,7 +161,7 @@ private fun CreateForm(onBack: () -> Unit) {
                 try {
                     Repo.createCouple(name.trim(), anniversary)
                 } catch (e: Exception) {
-                    error = "Couldn't connect. Check your internet and try again."
+                    error = "Couldn't create: " + (e.message ?: e.javaClass.simpleName)
                     busy = false
                 }
             }
@@ -266,7 +266,7 @@ private fun JoinForm(onBack: () -> Unit, onFound: (String, List<Member>) -> Unit
                 } catch (e: IllegalStateException) {
                     error = e.message
                 } catch (e: Exception) {
-                    error = "Couldn't connect. Check your internet and try again."
+                    error = "Couldn't connect: " + (e.message ?: e.javaClass.simpleName)
                 }
                 busy = false
             }

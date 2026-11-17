@@ -244,7 +244,7 @@ fun UsScreen() {
                             {
                                 val send = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, "Join me in Our Jar. Open the app, tap Join my partner, and enter this code: $code")
+                                    putExtra(Intent.EXTRA_TEXT, "Join me in Jarlings. Open the app, tap Join my partner, and enter this code: $code")
                                 }
                                 ctx.startActivity(Intent.createChooser(send, "Share code"))
                             },

@@ -1,4 +1,4 @@
-# Our Jar: setup
+# Jarlings: setup
 
 A couples app for Android: love notes, a shared mood marble jar, a date calendar, an anniversary counter and important dates, plus two home screen widgets (love note and mood jar).
 
@@ -9,7 +9,7 @@ Everything is built by GitHub, so no computer is needed. These steps can all be 
 1. Go to https://console.firebase.google.com and create a project (any name, turn off Google Analytics).
 2. Click the Android icon to add an app.
    - Android package name: `com.qalumn.ourjar`
-   - Nickname: Our Jar. Skip the SHA-1 field.
+   - Nickname: Jarlings. Skip the SHA-1 field.
 3. Download `google-services.json` when it offers it.
 
 ## 2. Turn on sign-in and the database
@@ -26,7 +26,7 @@ Put the downloaded file in the `app/` folder of the repo, so it ends up at `app/
 
 ## 4. Build and install
 
-Every push to `main` builds the app. When the build finishes (about 5 minutes), open the repo's **Releases** page, download `OurJar.apk` on both phones and install it. Android will ask you to allow installs from your browser the first time.
+Every push to `main` builds the app. When the build finishes (about 5 minutes), open the repo's **Releases** page, download `Jarlings.apk` on both phones and install it. Android will ask you to allow installs from your browser the first time.
 
 ## 5. First run
 
@@ -34,7 +34,7 @@ Every push to `main` builds the app. When the build finishes (about 5 minutes), 
 2. Send the code that appears to your partner.
 3. Your partner taps **Join my partner**, enters the code, and adds their name.
 
-To add the widgets: press and hold the home screen, tap Widgets, find **Our Jar**.
+To add the widgets: press and hold the home screen, tap Widgets, find **Jarlings**.
 
 ## Notes
 

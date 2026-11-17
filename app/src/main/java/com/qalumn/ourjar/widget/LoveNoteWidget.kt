@@ -55,7 +55,7 @@ private fun NoteWidgetContent(context: Context, note: Note?, partner: String, si
             text = note?.text,
             whenText = note?.let { TimeFmt.relative(it.createdAt) },
             emptyMessage = when {
-                !signedIn -> "Open Our Jar to get started"
+                !signedIn -> "Open Jarlings to get started"
                 partner.isNotBlank() -> "No notes from $partner yet. Tap to write one."
                 else -> "No notes yet. Tap to write one."
             },

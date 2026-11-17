@@ -96,7 +96,7 @@ private fun ColumnScope.Welcome(onCreate: () -> Unit, onJoin: () -> Unit) {
     )
     Spacer(Modifier.height(20.dp))
     Text(
-        "Our Jar",
+        "Jarlings",
         style = MaterialTheme.typography.displayMedium,
         color = Ours.colors.ink,
         textAlign = TextAlign.Center,
@@ -215,7 +215,7 @@ private fun CodeShown(code: String) {
             onClick = {
                 val send = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "Join me in Our Jar. Open the app, tap Join my partner, and enter this code: $pretty")
+                    putExtra(Intent.EXTRA_TEXT, "Join me in Jarlings. Open the app, tap Join my partner, and enter this code: $pretty")
                 }
                 ctx.startActivity(Intent.createChooser(send, "Share code"))
             },

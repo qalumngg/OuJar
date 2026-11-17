@@ -259,8 +259,10 @@ object Repo {
     }
 
     private fun parseNote(d: DocumentSnapshot): Note? {
-        val text = d.getString("text") ?: return null
-        return Note(d.id, d.getString("fromId").orEmpty(), d.getString("fromName").orEmpty(), text, d.getLong("createdAt") ?: 0L)
+        val text = d.getString("text").orEmpty()
+        val drawing = d.getString("drawing").orEmpty()
+        if (text.isBlank() && drawing.isBlank()) return null
+        return Note(d.id, d.getString("fromId").orEmpty(), d.getString("fromName").orEmpty(), text, d.getLong("createdAt") ?: 0L, drawing)
     }
 
     private fun parseMarble(d: DocumentSnapshot): MarbleItem? {
@@ -285,13 +287,15 @@ object Repo {
 
     private fun base(s: Session) = couples().document(s.coupleCode)
 
-    fun sendNote(text: String) {
+    fun sendNote(text: String, drawing: String = "") {
         val s = session.value ?: return
         val clean = text.trim()
-        if (clean.isEmpty()) return
-        base(s).collection("notes").document().set(
-            mapOf("fromId" to s.memberId, "fromName" to s.myName, "text" to clean, "createdAt" to System.currentTimeMillis()),
+        if (clean.isEmpty() && drawing.isEmpty()) return
+        val data = mutableMapOf<String, Any>(
+            "fromId" to s.memberId, "fromName" to s.myName, "text" to clean, "createdAt" to System.currentTimeMillis(),
         )
+        if (drawing.isNotEmpty()) data["drawing"] = drawing
+        base(s).collection("notes").document().set(data)
     }
 
     fun deleteNote(id: String) {

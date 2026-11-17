@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Jarlings</string>
     <string name="widget_note_label">Love note</string>
-    <string name="widget_note_desc">The latest note from your partner</string>
+    <string name="widget_note_desc">The newest note left for you</string>
     <string name="widget_jar_label">Mood jar</string>
-    <string name="widget_jar_desc">This week\'s marbles, for both of you</string>
+    <string name="widget_jar_desc">This week\'s two jars</string>
 </resources>

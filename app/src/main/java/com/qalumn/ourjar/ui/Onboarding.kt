@@ -104,16 +104,16 @@ private fun ColumnScope.Welcome(onCreate: () -> Unit, onJoin: () -> Unit) {
     )
     Spacer(Modifier.height(10.dp))
     Text(
-        "A small shared space for love notes, moods, and the dates you are looking forward to.",
+        "Love notes, mood marbles and the dates you are looking forward to. Just for the two of you.",
         style = MaterialTheme.typography.bodyLarge,
         color = Ours.colors.inkSoft,
         textAlign = TextAlign.Center,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
     )
     Spacer(Modifier.height(36.dp))
-    PrimaryButton("Start our space", onCreate, Modifier.fillMaxWidth())
+    PrimaryButton("Start our jar", onCreate, Modifier.fillMaxWidth())
     Spacer(Modifier.height(12.dp))
-    SoftButton("Join my partner", onJoin, Modifier.fillMaxWidth())
+    SoftButton("Join with a code", onJoin, Modifier.fillMaxWidth())
     Spacer(Modifier.height(24.dp))
 }
 
@@ -137,7 +137,7 @@ private fun CreateForm(onBack: () -> Unit) {
 
     StepHeader(
         "Let's set up",
-        "Tell us who you are. Your partner joins with a code in the next step.",
+        "Who are you? They join with a code in the next step.",
         onBack,
     )
     OurField(name, { name = it.take(24) }, "Your name")
@@ -189,7 +189,7 @@ private fun CodeShown(code: String) {
     Text("You're all set", style = MaterialTheme.typography.headlineLarge, color = Ours.colors.ink)
     Spacer(Modifier.height(8.dp))
     Text(
-        "Send this code to your partner. They open the app, tap Join, and type it in.",
+        "Send them this code. They open Jarlings, tap Join, and type it in.",
         style = MaterialTheme.typography.bodyLarge,
         color = Ours.colors.inkSoft,
     )
@@ -215,7 +215,7 @@ private fun CodeShown(code: String) {
             onClick = {
                 val send = Intent(Intent.ACTION_SEND).apply {
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, "Join me in Jarlings. Open the app, tap Join my partner, and enter this code: $pretty")
+                    putExtra(Intent.EXTRA_TEXT, "Join me in Jarlings. Open the app, tap Join with a code, and enter this code: $pretty")
                 }
                 ctx.startActivity(Intent.createChooser(send, "Share code"))
             },
@@ -242,7 +242,7 @@ private fun JoinForm(onBack: () -> Unit, onFound: (String, List<Member>) -> Unit
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
-    StepHeader("Join your partner", "Type the code they sent you. It has 10 letters and numbers.", onBack)
+    StepHeader("Join them", "Type the code they sent you. It is 10 letters and numbers.", onBack)
     OurField(
         code,
         { code = it.uppercase().take(12) },
@@ -300,8 +300,8 @@ private fun PickPerson(code: String, people: List<Member>, onBack: () -> Unit) {
     StepHeader(
         "Found you",
         if (people.isEmpty()) "Add your name to join."
-        else if (full) "This couple is already full. If you were set up before, pick your name to get back in."
-        else "If you were already set up on another phone, pick your name. Otherwise add yours below.",
+        else if (full) "This one is full. If you have already set up, pick your name."
+        else "Set up on another phone already? Pick your name. Otherwise add yours below.",
         onBack,
     )
     if (people.isNotEmpty()) {

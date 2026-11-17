@@ -108,16 +108,15 @@ object JarRenderer {
         canvas.drawPath(body, fill)
 
         // Marbles
-        val r = g.MARBLE_RADIUS
-        val rr = r * 0.95f
         val marblePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-        val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = rr * 0.07f }
+        val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
         val swirl = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE; strokeCap = Paint.Cap.ROUND
         }
         val spec = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL; color = 0xCCFFFFFF.toInt() }
 
         marbles.forEachIndexed { i, m ->
+            val rr = m.pos.r * 0.95f
             val cx = m.pos.x
             val cy = if (dropY != null && i == marbles.lastIndex) dropY else m.pos.y
             val light = mix(m.color, 0xFFFFFFFF.toInt(), 0.55f)
@@ -133,6 +132,7 @@ object JarRenderer {
             val a = (m.seed and 0xFF) * 360f / 256f
             canvas.drawArc(RectF(cx - rr * 0.62f, cy - rr * 0.62f, cx + rr * 0.62f, cy + rr * 0.62f), a, 105f, false, swirl)
 
+            ring.strokeWidth = rr * 0.07f
             ring.color = alpha(dark, 110)
             canvas.drawCircle(cx, cy, rr * 0.97f, ring)
 

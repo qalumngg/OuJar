@@ -44,7 +44,7 @@ object JarGeometry {
     const val CAPACITY = 30
 }
 
-data class MarblePos(val x: Float, val y: Float)
+data class MarblePos(val x: Float, val y: Float, val r: Float)
 
 object JarLayout {
 
@@ -55,15 +55,23 @@ object JarLayout {
             h = h xor c.code
             h *= 0x01000193
         }
+        // Extra mixing so neighbouring ids give very different numbers.
+        h = h xor (h ushr 15)
+        h *= 0x2C1B3C6D
+        h = h xor (h ushr 12)
         return h
     }
 
-    private val r = JarGeometry.MARBLE_RADIUS
-    private val minX = JarGeometry.INNER_LEFT + r
-    private val maxX = JarGeometry.INNER_RIGHT - r
+    private val base = JarGeometry.MARBLE_RADIUS
 
-    /** Lowest centre height (largest y) a marble can have at horizontal position x, ignoring other marbles. */
-    fun floorCenterY(x: Float): Float {
+    /** Marbles are not all the same size: a little bigger or smaller, decided by the marble's id. */
+    fun radiusFor(id: String): Float {
+        val f = ((hash(id) ushr 4) and 0xFF) / 255f
+        return base * (0.86f + 0.24f * f)
+    }
+
+    /** Lowest centre height (largest y) a marble of radius [r] can have at horizontal position x, ignoring other marbles. */
+    fun floorCenterY(x: Float, r: Float): Float {
         val ri = JarGeometry.INNER_CORNER
         val rc = ri - r
         val cxL = JarGeometry.INNER_LEFT + ri
@@ -82,13 +90,13 @@ object JarLayout {
         }
     }
 
-    private fun restY(x: Float, placed: List<MarblePos>): Float {
-        var y = floorCenterY(x)
-        val twoR = 2f * r
+    private fun restY(x: Float, r: Float, placed: List<MarblePos>): Float {
+        var y = floorCenterY(x, r)
         for (p in placed) {
             val dx = abs(p.x - x)
-            if (dx < twoR) {
-                val cand = p.y - sqrt(twoR * twoR - dx * dx)
+            val reach = r + p.r
+            if (dx < reach) {
+                val cand = p.y - sqrt(reach * reach - dx * dx)
                 if (cand < y) y = cand
             }
         }
@@ -96,30 +104,37 @@ object JarLayout {
     }
 
     /**
-     * Drops marbles into the jar one at a time, oldest first, and lets each one roll
-     * into the nearest gap. Deterministic: the same ids always give the same pile.
+     * Drops marbles into the jar one at a time, oldest first. Each marble has its own size, falls from its
+     * own spot, and rolls a different distance and direction, so the pile looks natural rather than stacked.
+     * Deterministic: the same ids always give the same pile.
      */
     fun settle(ids: List<String>): List<MarblePos> {
         val placed = ArrayList<MarblePos>(ids.size)
-        val step = r * 0.2f
         for (id in ids) {
-            val frac = ((hash(id) ushr 8) and 0xFFFF) / 65535f
+            val h = hash(id)
+            val r = radiusFor(id)
+            val minX = JarGeometry.INNER_LEFT + r
+            val maxX = JarGeometry.INNER_RIGHT - r
+            val frac = ((h ushr 8) and 0xFFFF) / 65535f
             var x = minX + frac * (maxX - minX)
-            var y = restY(x, placed)
-            for (i in 0 until 80) {
+            var y = restY(x, r, placed)
+            val step = r * 0.22f
+            val rolls = 6 + ((h ushr 20) and 0x3F)
+            for (i in 0 until rolls) {
                 val xa = max(minX, x - step)
                 val xb = min(maxX, x + step)
-                val ya = restY(xa, placed)
-                val yb = restY(xb, placed)
-                if (ya > y + 1e-4f && ya >= yb) {
-                    x = xa; y = ya
-                } else if (yb > y + 1e-4f) {
-                    x = xb; y = yb
-                } else {
-                    break
+                val ya = restY(xa, r, placed)
+                val yb = restY(xb, r, placed)
+                val downLeft = ya > y + 1e-4f
+                val downRight = yb > y + 1e-4f
+                if (!downLeft && !downRight) break
+                val goLeft = when {
+                    downLeft && downRight -> ((h ushr (i % 20)) and 1) == 0
+                    else -> downLeft
                 }
+                if (goLeft) { x = xa; y = ya } else { x = xb; y = yb }
             }
-            placed.add(MarblePos(x, y))
+            placed.add(MarblePos(x, y, r))
         }
         return placed
     }

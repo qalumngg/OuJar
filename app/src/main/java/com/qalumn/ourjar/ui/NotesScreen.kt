@@ -70,15 +70,15 @@ fun NotesScreen(onOpenUs: () -> Unit) {
             Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 112.dp),
         ) {
-            item { ScreenTitle("Notes", "Little things, left for each other") }
+            item { ScreenTitle("Notes", "Little things for each other") }
             item { TogetherStrip(couple.anniversary, onOpenUs) }
 
             if (notes.isEmpty()) {
                 item {
                     EmptyNote(
                         "No notes yet",
-                        if (partner != null) "Write the first one for $partner. It will also show on their home screen widget."
-                        else "Write the first one. Once your partner joins, they will see it right away.",
+                        if (partner != null) "Write the first one for $partner. It shows up on their home screen."
+                        else "Write the first one. They will see it as soon as they join.",
                     )
                 }
             } else {
@@ -122,7 +122,7 @@ fun NotesScreen(onOpenUs: () -> Unit) {
             onDismissRequest = { deleting = null },
             containerColor = Ours.colors.card,
             title = { Text("Delete this note?", style = MaterialTheme.typography.titleLarge, color = Ours.colors.ink) },
-            text = { Text("It will be removed for both of you.", color = Ours.colors.inkSoft) },
+            text = { Text("It will disappear for both of you.", color = Ours.colors.inkSoft) },
             confirmButton = {
                 TextButton(onClick = { Repo.deleteNote(n.id); deleting = null }) { Text("Delete", color = Ours.colors.accent) }
             },
@@ -143,7 +143,7 @@ private fun TogetherStrip(anniversary: LocalDate?, onOpenUs: () -> Unit) {
         } else {
             Text("Add your anniversary", style = MaterialTheme.typography.titleMedium, color = c.ink)
             Spacer(Modifier.height(2.dp))
-            Text("Count the days together in the Us tab.", style = MaterialTheme.typography.bodyMedium, color = c.inkSoft)
+            Text("See how long it has been in the Us tab.", style = MaterialTheme.typography.bodyMedium, color = c.inkSoft)
         }
     }
 }

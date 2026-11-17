@@ -14,6 +14,8 @@ data class Note(
     val fromName: String,
     val text: String,
     val createdAt: Long,
+    /** Hand-drawn note, encoded by DrawingCodec. Empty for typed notes. */
+    val drawing: String = "",
 )
 
 data class MarbleItem(
@@ -52,4 +54,4 @@ data class DateItem(
 data class CoupleInfo(val anniversary: LocalDate?)
 
 /** What a widget needs, kept in plain SharedPreferences so it works without the app running. */
-data class MarbleLite(val id: String, val mood: Mood, val createdAt: Long)
+data class MarbleLite(val id: String, val memberId: String, val mood: Mood, val createdAt: Long)

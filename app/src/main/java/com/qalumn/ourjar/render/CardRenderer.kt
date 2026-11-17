@@ -132,14 +132,16 @@ object CardRenderer {
         return bmp
     }
 
-    /** This month's mood jar, with a short caption. */
+    /** Both mood jars side by side: yours on the left, your partner's on the right. */
     fun jarBitmap(
         context: Context,
         widthPx: Int,
         heightPx: Int,
         density: Float,
-        month: String,
-        marbles: List<MarbleItem>,
+        myName: String,
+        mine: List<MarbleItem>,
+        partnerName: String,
+        theirs: List<MarbleItem>,
     ): Bitmap {
         val (w, h) = clampSize(widthPx, heightPx)
         val d = density * (w.toFloat() / max(widthPx, 1))
@@ -147,51 +149,33 @@ object CardRenderer {
         val canvas = Canvas(bmp)
         card(canvas, w.toFloat(), h.toFloat(), d, CREAM)
 
-        val scene = JarScene.from(marbles)
         val display = font(context, R.font.fraunces_semibold)
         val sans = font(context, R.font.dmsans_medium)
-        val countText = if (marbles.size == 1) "1 marble" else "${marbles.size} marbles"
-        val wide = w >= h * 1.3f
+        val name = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = display; color = INK; textSize = 13.5f * d }
+        val sub = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = sans; color = INK_SOFT; textSize = 11f * d }
 
-        val title = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = display; color = INK; textSize = 20f * d }
-        val sub = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = sans; color = INK_SOFT; textSize = 12.5f * d }
+        val inset = 12f * d
+        val gap = 8f * d
+        val captionH = 36f * d
+        val colW = (w - 2 * inset - gap) / 2f
+        val jarH = (h - 2 * inset - captionH).coerceAtLeast(10f)
 
-        if (wide) {
-            val inset = 12f * d
-            val jarSize = min(h - 2 * inset, w * 0.5f)
+        val columns = listOf(
+            Triple(myName, JarScene.from(mine), mine.size),
+            Triple(partnerName, JarScene.from(theirs), theirs.size),
+        )
+        columns.forEachIndexed { i, (who, scene, count) ->
+            val left = inset + i * (colW + gap)
             canvas.save()
-            canvas.translate(inset, inset)
-            canvas.clipRect(0f, 0f, jarSize, h - 2 * inset)
-            JarRenderer.draw(canvas, jarSize, h - 2 * inset, scene, JarPalettes.Light)
+            canvas.translate(left, inset)
+            canvas.clipRect(0f, 0f, colW, jarH)
+            JarRenderer.draw(canvas, colW, jarH, scene, JarPalettes.Light)
             canvas.restore()
 
-            val tx = inset + jarSize + 14f * d
-            var y = h / 2f - 34f * d
-            canvas.drawText(month, tx, y, title)
-            y += 20f * d
-            canvas.drawText(countText, tx, y, sub)
-            y += 22f * d
-            val counts = marbles.groupingBy { it.mood }.eachCount().entries.sortedByDescending { it.value }.take(3)
-            val dot = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-            val label = TextPaint(Paint.ANTI_ALIAS_FLAG).apply { typeface = sans; color = INK; textSize = 12.5f * d }
-            for ((mood, n) in counts) {
-                dot.color = mood.argb
-                canvas.drawCircle(tx + 6f * d, y - 4f * d, 6f * d, dot)
-                canvas.drawText("${mood.label} $n", tx + 18f * d, y, label)
-                y += 20f * d
-            }
-        } else {
-            val captionH = 40f * d
-            val inset = 10f * d
-            canvas.save()
-            canvas.translate(inset, inset)
-            canvas.clipRect(0f, 0f, w - 2 * inset, h - captionH - inset)
-            JarRenderer.draw(canvas, w - 2 * inset, h - captionH - inset, scene, JarPalettes.Light)
-            canvas.restore()
-            val caption = "$month, $countText"
-            title.textSize = 14f * d
-            val tw = title.measureText(caption)
-            canvas.drawText(caption, (w - tw) / 2f, h - 16f * d, title)
+            val label = TextUtils.ellipsize(who, name, colW, TextUtils.TruncateAt.END).toString()
+            canvas.drawText(label, left + (colW - name.measureText(label)) / 2f, inset + jarH + 16f * d, name)
+            val countText = if (count == 1) "1 marble" else "$count marbles"
+            canvas.drawText(countText, left + (colW - sub.measureText(countText)) / 2f, inset + jarH + 30f * d, sub)
         }
         return bmp
     }

@@ -24,36 +24,42 @@ import com.qalumn.ourjar.data.MarbleItem
 import com.qalumn.ourjar.data.Prefs
 import com.qalumn.ourjar.domain.TimeFmt
 import com.qalumn.ourjar.render.CardRenderer
-import java.time.LocalDate
 
-/** This week's mood jar. Tap to open the jar and add a marble. */
+/** This week's two mood jars, yours and your partner's. Tap to open the jars and add a marble. */
 class MoodJarWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val weekStart = TimeFmt.startOfWeekMillis()
-        val marbles = Prefs.loadMarbles()
+        val session = Prefs.session()
+        val all = Prefs.loadMarbles()
             .filter { it.createdAt >= weekStart }
-            .map { MarbleItem(it.id, "", "", it.mood, "", it.createdAt) }
-        provideContent { JarWidgetContent(context, marbles) }
+            .map { MarbleItem(it.id, it.memberId, "", it.mood, "", it.createdAt) }
+        val mine = all.filter { it.memberId == session?.memberId }
+        val theirs = all.filter { it.memberId != session?.memberId }
+        val myName = session?.myName ?: "Me"
+        val partner = Prefs.partnerName.ifBlank { "Them" }
+        provideContent { JarWidgetContent(context, myName, mine, partner, theirs) }
     }
 }
 
 @Composable
-private fun JarWidgetContent(context: Context, marbles: List<MarbleItem>) {
+private fun JarWidgetContent(context: Context, myName: String, mine: List<MarbleItem>, partner: String, theirs: List<MarbleItem>) {
     val size = LocalSize.current
     val density = context.resources.displayMetrics.density
     val widthPx = (size.width.value * density).toInt().coerceAtLeast(1)
     val heightPx = (size.height.value * density).toInt().coerceAtLeast(1)
 
-    val bitmap = remember(size, marbles) {
+    val bitmap = remember(size, mine, theirs, myName, partner) {
         CardRenderer.jarBitmap(
             context = context,
             widthPx = widthPx,
             heightPx = heightPx,
             density = density,
-            month = "This week",
-            marbles = marbles,
+            myName = myName,
+            mine = mine,
+            partnerName = partner,
+            theirs = theirs,
         )
     }
 
@@ -66,7 +72,7 @@ private fun JarWidgetContent(context: Context, marbles: List<MarbleItem>) {
 
     Image(
         provider = ImageProvider(bitmap),
-        contentDescription = "Mood jar with ${marbles.size} marbles this week",
+        contentDescription = "Mood jars: $myName has ${mine.size} marbles this week, $partner has ${theirs.size}",
         contentScale = ContentScale.Fit,
         modifier = GlanceModifier.fillMaxSize().clickable(actionStartActivity(intent)),
     )

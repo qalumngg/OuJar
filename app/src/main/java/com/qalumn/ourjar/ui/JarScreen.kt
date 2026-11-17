@@ -60,42 +60,39 @@ fun JarScreen() {
     val session by Repo.session.collectAsState()
     val me = session ?: return
     val all by Repo.marbles.collectAsState()
+    val members by Repo.members.collectAsState()
     var adding by remember { mutableStateOf(false) }
 
     val today = LocalDate.now()
     val weekStart = TimeFmt.startOfWeekMillis(today)
-    val month = remember(all, weekStart) { all.filter { it.createdAt >= weekStart } }
-    val scene = remember(month) { JarScene.from(month) }
-    val newestId = month.maxByOrNull { it.createdAt }?.id
-    val counts = remember(month) { month.groupingBy { it.mood }.eachCount() }
+    val week = remember(all, weekStart) { all.filter { it.createdAt >= weekStart } }
+    val mine = remember(week) { week.filter { it.memberId == me.memberId } }
+    val theirs = remember(week) { week.filter { it.memberId != me.memberId } }
+    val myScene = remember(mine) { JarScene.from(mine) }
+    val theirScene = remember(theirs) { JarScene.from(theirs) }
+    val partnerName = members.firstOrNull { it.id != me.memberId }?.name
+
+    val counts = remember(week) { week.groupingBy { it.mood }.eachCount() }
 
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 32.dp),
     ) {
+        item { ScreenTitle("Our jars", TimeFmt.weekOf(today)) }
         item {
-            ScreenTitle(
-                "Our jar",
-                "${TimeFmt.weekOf(today)}, ${if (month.size == 1) "1 marble" else "${month.size} marbles"}",
-            )
-        }
-        item {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                JarView(
-                    marbles = scene,
-                    newestId = newestId,
-                    modifier = Modifier.fillMaxWidth(0.74f).aspectRatio(1f / JarGeometry.HEIGHT),
-                )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                JarColumn(me.myName, mine.size, myScene, mine.maxByOrNull { it.createdAt }?.id, Modifier.weight(1f))
+                JarColumn(partnerName ?: "Not joined yet", theirs.size, theirScene, theirs.maxByOrNull { it.createdAt }?.id, Modifier.weight(1f))
             }
         }
         item {
             Column {
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(20.dp))
                 PrimaryButton("Add a marble", { adding = true }, Modifier.fillMaxWidth())
-                if (month.isEmpty()) {
+                if (week.isEmpty()) {
                     EmptyNote(
-                        "An empty jar",
-                        "Add a marble for how you feel today. Each of you can add as many as you like, and the jar starts fresh every Monday.",
+                        "Nothing in here yet",
+                        "Drop in a marble for how you feel. The jars empty out every Monday.",
                     )
                 }
             }
@@ -141,6 +138,24 @@ fun JarScreen() {
 }
 
 @Composable
+private fun JarColumn(name: String, count: Int, scene: List<com.qalumn.ourjar.render.JarMarble>, newestId: String?, modifier: Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        JarView(
+            marbles = scene,
+            newestId = newestId,
+            modifier = Modifier.fillMaxWidth().aspectRatio(1f / JarGeometry.HEIGHT),
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(name, style = MaterialTheme.typography.titleMedium, color = Ours.colors.ink, maxLines = 1)
+        Text(
+            if (count == 1) "1 marble" else "$count marbles",
+            style = MaterialTheme.typography.labelMedium,
+            color = Ours.colors.inkSoft,
+        )
+    }
+}
+
+@Composable
 private fun MarbleRow(m: MarbleItem, mine: Boolean) {
     val c = Ours.colors
     Row(
@@ -151,7 +166,7 @@ private fun MarbleRow(m: MarbleItem, mine: Boolean) {
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(
-                (if (mine) "You" else m.memberName.ifBlank { "Your partner" }) + " felt " + m.mood.label.lowercase(),
+                (if (mine) "You" else m.memberName.ifBlank { "They" }) + " felt " + m.mood.label.lowercase(),
                 style = MaterialTheme.typography.titleSmall,
                 color = c.ink,
             )

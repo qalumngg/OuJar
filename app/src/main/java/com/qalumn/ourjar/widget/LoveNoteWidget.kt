@@ -57,7 +57,7 @@ private fun NoteWidgetContent(context: Context, note: Note?, partner: String, si
             emptyMessage = when {
                 !signedIn -> "Open Jarlings to get started"
                 partner.isNotBlank() -> "No notes from $partner yet. Tap to write one."
-                else -> "No notes yet. Tap to write one."
+                else -> "Nothing yet. Tap to write one."
             },
         )
     }

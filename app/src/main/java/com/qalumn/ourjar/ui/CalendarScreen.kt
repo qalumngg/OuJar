@@ -83,7 +83,7 @@ fun CalendarScreen() {
         item {
             ScreenTitle(
                 "Dates",
-                "Date nights and days that matter",
+                "Things to look forward to",
                 modifier = Modifier.padding(horizontal = 4.dp),
                 trailing = { SoftButton("Add", { editor = newDateItem(selected) }) },
             )
@@ -108,7 +108,7 @@ fun CalendarScreen() {
                     OurCard(tinted = true) {
                         Text("Nothing planned", style = MaterialTheme.typography.titleMedium, color = Ours.colors.ink)
                         Spacer(Modifier.height(4.dp))
-                        Text("Pick something nice for this day.", style = MaterialTheme.typography.bodyMedium, color = Ours.colors.inkSoft)
+                        Text("Add a date night or anything else.", style = MaterialTheme.typography.bodyMedium, color = Ours.colors.inkSoft)
                         Spacer(Modifier.height(14.dp))
                         SoftButton("Plan something", { editor = newDateItem(selected) })
                     }

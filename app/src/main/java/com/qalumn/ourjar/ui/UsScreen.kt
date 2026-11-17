@@ -86,7 +86,7 @@ fun UsScreen() {
                         Text("Our anniversary", style = MaterialTheme.typography.titleLarge, color = Ours.colors.ink)
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            "Add the day you got together and we will count the days, months and years for you.",
+                            "Add the day you got together and watch the days add up.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Ours.colors.inkSoft,
                         )
@@ -179,7 +179,7 @@ fun UsScreen() {
                         Text("Birthdays, first date, moving day", style = MaterialTheme.typography.titleMedium, color = Ours.colors.ink)
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "Keep the days that matter in one place. They repeat every year and show on the calendar too.",
+                            "Birthdays, firsts, the big days. They come back every year and show on the calendar.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Ours.colors.inkSoft,
                         )
@@ -244,7 +244,7 @@ fun UsScreen() {
                             {
                                 val send = Intent(Intent.ACTION_SEND).apply {
                                     type = "text/plain"
-                                    putExtra(Intent.EXTRA_TEXT, "Join me in Jarlings. Open the app, tap Join my partner, and enter this code: $code")
+                                    putExtra(Intent.EXTRA_TEXT, "Join me in Jarlings. Open the app, tap Join with a code, and enter this code: $code")
                                 }
                                 ctx.startActivity(Intent.createChooser(send, "Share code"))
                             },
@@ -264,7 +264,7 @@ fun UsScreen() {
                     }
                     if (members.size < 2) {
                         Text(
-                            "Waiting for your partner to join with the code above.",
+                            "Waiting for them to join with the code above.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Ours.colors.inkSoft,
                             modifier = Modifier.padding(top = 6.dp),
@@ -277,13 +277,13 @@ fun UsScreen() {
         item {
             Column(Modifier.fillMaxWidth().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    "Widgets: press and hold your home screen, tap Widgets, then look for Jarlings to add the love note and the mood jar.",
+                    "Widgets: hold down on your home screen, tap Widgets, and look for Jarlings.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Ours.colors.inkSoft,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(8.dp))
-                QuietTextButton("Leave this couple on this phone", { confirmLeave = true }, danger = true)
+                QuietTextButton("Sign out of this phone", { confirmLeave = true }, danger = true)
             }
         }
     }
@@ -301,10 +301,10 @@ fun UsScreen() {
         AlertDialog(
             onDismissRequest = { confirmLeave = false },
             containerColor = Ours.colors.card,
-            title = { Text("Leave this couple?", style = MaterialTheme.typography.titleLarge, color = Ours.colors.ink) },
+            title = { Text("Sign out of this phone?", style = MaterialTheme.typography.titleLarge, color = Ours.colors.ink) },
             text = {
                 Text(
-                    "This only signs this phone out. Your notes, marbles and dates stay safe, and you can come back with the code.",
+                    "Everything stays saved. Use your code to get back in.",
                     color = Ours.colors.inkSoft,
                 )
             },

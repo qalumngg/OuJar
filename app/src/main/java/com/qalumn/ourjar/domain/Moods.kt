@@ -18,6 +18,9 @@ enum class Mood(val key: String, val label: String, val argb: Int, val blurb: St
     ANXIOUS("anxious", "Anxious", 0xFF9FA3C7.toInt(), "Worried or buzzing, hard to settle."),
     STRESSED("stressed", "Stressed", 0xFFE8998A.toInt(), "Too much on, feeling the pressure."),
     ANGRY("angry", "Angry", 0xFFD64550.toInt(), "Hot and frustrated, something feels unfair."),
+    LOVEY("lovey", "Lovey", 0xFFFFB8A8.toInt(), "Soft and affectionate, wanting cuddles."),
+    NEEDY("needy", "Needy", 0xFFD3A8EA.toInt(), "Wanting love or attention."),
+    CLINGY("clingy", "Clingy", 0xFFD9A3A8.toInt(), "Wanting to be close and held."),
     NOTSURE("notsure", "Not sure", 0xFFD2CCD6.toInt(), "Something feels off or mixed and you cannot name it. That is a real answer.");
 
     companion object {
@@ -28,6 +31,7 @@ enum class Mood(val key: String, val label: String, val argb: Int, val blurb: St
         val groups: List<Pair<String, List<Mood>>> = listOf(
             "Good, and buzzing" to listOf(HAPPY, EXCITED, PLAYFUL, FLIRTY),
             "Good, and soft" to listOf(LOVED, GRATEFUL, HOPEFUL, CALM, COZY),
+            "Wanting closeness" to listOf(LOVEY, NEEDY, CLINGY),
             "Low or flat" to listOf(TIRED, BORED, SAD, LONELY),
             "Wound up" to listOf(ANXIOUS, STRESSED, ANGRY),
             "Cannot tell" to listOf(NOTSURE),

@@ -277,7 +277,7 @@ fun UsScreen() {
         item {
             Column(Modifier.fillMaxWidth().padding(top = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    "Widgets: press and hold your home screen, tap Widgets, then look for Our Jar to add the love note and the mood jar.",
+                    "Widgets: press and hold your home screen, tap Widgets, then look for Jarlings to add the love note and the mood jar.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Ours.colors.inkSoft,
                     textAlign = TextAlign.Center,
